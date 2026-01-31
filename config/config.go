@@ -17,9 +17,19 @@ func LoadConfig(path string) (config Config, err error) {
 
 	viper.AutomaticEnv()
 
+	viper.BindEnv("DB_DRIVER")
+	viper.BindEnv("DB_SOURCE")
+	viper.BindEnv("SERVER_ADDRESS")
+
 	err = viper.ReadInConfig()
 	if err != nil {
-		return
+		if _, ok := err.(viper.ConfigFileNotFoundError); ok {
+			// Config file not found; ignore error if desired
+			// Proceed to read from environment variables
+		} else {
+			// Config file was found but another error was produced
+			return
+		}
 	}
 
 	err = viper.Unmarshal(&config)
