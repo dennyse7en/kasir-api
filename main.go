@@ -10,6 +10,7 @@ import (
 	"kasir-api/internal/service"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
@@ -17,6 +18,10 @@ func main() {
 	cfg, err := config.LoadConfig(".")
 	if err != nil {
 		log.Fatalf("cannot load config: %v", err)
+	}
+
+	if port := os.Getenv("PORT"); port != "" {
+		cfg.ServerAddress = ":" + port
 	}
 
 	// Initialize Database
