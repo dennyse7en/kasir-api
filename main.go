@@ -24,6 +24,11 @@ func main() {
 		cfg.ServerAddress = ":" + port
 	}
 
+	fmt.Println("Debug DB Driver:", cfg.DBDriver)
+	if len(cfg.DBSource) > 10 {
+		fmt.Println("Debug DB Source (Masked):", cfg.DBSource[:15]+"...")
+	}
+
 	// Initialize Database
 	db, err := database.NewPostgresDB(cfg.DBDriver, cfg.DBSource)
 	if err != nil {
