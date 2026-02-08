@@ -45,6 +45,10 @@ func main() {
 	productSvc := service.NewProductService(productRepo)
 	productHandler := handler.NewProductHandler(productSvc)
 
+	transactionRepo := repository.NewTransactionRepository(db)
+	transactionSvc := service.NewTransactionService(transactionRepo, productRepo)
+	transactionHandler := handler.NewTransactionHandler(transactionSvc)
+
 	// Routes
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -59,6 +63,9 @@ func main() {
 
 	http.HandleFunc("/products", productHandler.HandleProducts)
 	http.HandleFunc("/products/", productHandler.HandleProductByID)
+
+	http.HandleFunc("/transactions", transactionHandler.CreateTransaction)
+	http.HandleFunc("/api/report/hari-ini", transactionHandler.GetDailyReport)
 
 	// Start Server
 	fmt.Printf("Server running on port %s\n", cfg.ServerAddress)

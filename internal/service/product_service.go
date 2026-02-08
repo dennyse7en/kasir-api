@@ -12,6 +12,7 @@ type ProductService interface {
 	GetByID(id int) (model.Product, error)
 	Update(id int, product model.Product) (model.Product, error)
 	Delete(id int) error
+	SearchByName(name string) ([]model.Product, error)
 }
 
 type productService struct {
@@ -55,4 +56,11 @@ func (s *productService) Update(id int, product model.Product) (model.Product, e
 
 func (s *productService) Delete(id int) error {
 	return s.repo.Delete(id)
+}
+
+func (s *productService) SearchByName(name string) ([]model.Product, error) {
+	if name == "" {
+		return s.GetAll()
+	}
+	return s.repo.SearchByName(name)
 }

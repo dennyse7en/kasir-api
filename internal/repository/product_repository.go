@@ -11,6 +11,7 @@ type ProductRepository interface {
 	GetByID(id int) (model.Product, error)
 	Update(id int, product model.Product) (model.Product, error)
 	Delete(id int) error
+	SearchByName(name string) ([]model.Product, error)
 }
 
 type productRepository struct {
@@ -22,7 +23,7 @@ func NewProductRepository(db *sql.DB) ProductRepository {
 }
 
 func (r *productRepository) Create(product model.Product) (model.Product, error) {
-	query := `INSERT INTO product (name, price, stock, category_id) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := `INSERT INTO products (name, price, stock, category_id) VALUES ($1, $2, $3, $4) RETURNING id`
 	err := r.db.QueryRow(query, product.Name, product.Price, product.Stock, product.CategoryID).Scan(&product.ID)
 	if err != nil {
 		return model.Product{}, err
@@ -31,7 +32,7 @@ func (r *productRepository) Create(product model.Product) (model.Product, error)
 }
 
 func (r *productRepository) GetAll() ([]model.Product, error) {
-	query := `SELECT id, name, price, stock, category_id FROM product`
+	query := `SELECT id, name, price, stock, category_id FROM products`
 	rows, err := r.db.Query(query)
 	if err != nil {
 		return nil, err
@@ -50,7 +51,7 @@ func (r *productRepository) GetAll() ([]model.Product, error) {
 }
 
 func (r *productRepository) GetByID(id int) (model.Product, error) {
-	query := `SELECT id, name, price, stock, category_id FROM product WHERE id = $1`
+	query := `SELECT id, name, price, stock, category_id FROM products WHERE id = $1`
 	var p model.Product
 	err := r.db.QueryRow(query, id).Scan(&p.ID, &p.Name, &p.Price, &p.Stock, &p.CategoryID)
 	if err != nil {
@@ -60,7 +61,7 @@ func (r *productRepository) GetByID(id int) (model.Product, error) {
 }
 
 func (r *productRepository) Update(id int, product model.Product) (model.Product, error) {
-	query := `UPDATE product SET name = $1, price = $2, stock = $3, category_id = $4 WHERE id = $5 RETURNING id, name, price, stock, category_id`
+	query := `UPDATE products SET name = $1, price = $2, stock = $3, category_id = $4 WHERE id = $5 RETURNING id, name, price, stock, category_id`
 	var updatedProduct model.Product
 	err := r.db.QueryRow(query, product.Name, product.Price, product.Stock, product.CategoryID, id).Scan(&updatedProduct.ID, &updatedProduct.Name, &updatedProduct.Price, &updatedProduct.Stock, &updatedProduct.CategoryID)
 	if err != nil {
@@ -70,7 +71,26 @@ func (r *productRepository) Update(id int, product model.Product) (model.Product
 }
 
 func (r *productRepository) Delete(id int) error {
-	query := `DELETE FROM product WHERE id = $1`
+	query := `DELETE FROM products WHERE id = $1`
 	_, err := r.db.Exec(query, id)
 	return err
+}
+
+func (r *productRepository) SearchByName(name string) ([]model.Product, error) {
+	query := `SELECT id, name, price, stock, category_id FROM products WHERE name ILIKE '%' || $1 || '%'`
+	rows, err := r.db.Query(query, name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var products []model.Product
+	for rows.Next() {
+		var p model.Product
+		if err := rows.Scan(&p.ID, &p.Name, &p.Price, &p.Stock, &p.CategoryID); err != nil {
+			return nil, err
+		}
+		products = append(products, p)
+	}
+	return products, nil
 }

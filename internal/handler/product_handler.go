@@ -21,7 +21,16 @@ func (h *ProductHandler) HandleProducts(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 
 	if r.Method == http.MethodGet {
-		products, err := h.service.GetAll()
+		nameQuery := r.URL.Query().Get("name")
+		var products []model.Product
+		var err error
+
+		if nameQuery != "" {
+			products, err = h.service.SearchByName(nameQuery)
+		} else {
+			products, err = h.service.GetAll()
+		}
+
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
